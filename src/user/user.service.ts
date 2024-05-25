@@ -7,7 +7,6 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { connect } from 'http2';
 
 @Injectable()
 export class UserService {
