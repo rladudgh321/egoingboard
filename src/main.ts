@@ -1,14 +1,17 @@
+import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import {
   DocumentBuilder,
   SwaggerCustomOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({ origin: true, credentials: true });
 
   const config = new DocumentBuilder()
     .setTitle('egoing API board')
@@ -32,6 +35,11 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3000);
+  const configService = app.get(ConfigService);
+  const stage = configService.get('STAGE');
+  const port = 3065;
+  console.info(`서버모드는 ${stage}이고 port는 ${port}`);
+
+  await app.listen(port);
 }
 bootstrap();
