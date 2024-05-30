@@ -6,7 +6,7 @@ import { PostService } from './post.service';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @Post('post')
+  @Post('/')
   async addpost(@Body() { title, content }: addpostReqDto) {
     const post = await this.postService.addpost(title, content);
     return { title: post.title, content: post.content };

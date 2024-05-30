@@ -3,10 +3,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
-import { PrismaService } from 'src/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
@@ -15,14 +15,7 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signup(
-    email: string,
-    password: string,
-    name: string,
-    gender: string,
-    posts: any,
-    profile: any,
-  ) {
+  async signup(email: string, password: string, name: string, gender: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: {
@@ -43,25 +36,25 @@ export class UserService {
           password: hash,
           name,
           gender,
-          posts,
-          profile,
         },
       });
 
       console.log('createUser', createUser);
 
       const accessToken = this.generateAccessToken(createUser.id);
-      const refreshTokenEntity = await this.prisma.refreshToken.create({
+      const refreshToken = this.generateRefreshToken(createUser.id);
+
+      await this.prisma.refreshToken.create({
         data: {
-          refreshTokenId: createUser.id,
-          token: this.generateRefreshToken(createUser.id),
+          token: refreshToken,
+          user: { connect: { id: createUser.id } },
         },
       });
 
       return {
         id: createUser.id,
         accessToken,
-        refreshToken: refreshTokenEntity.token,
+        refreshToken,
       };
     } catch (err) {
       console.error(err);
@@ -75,7 +68,9 @@ export class UserService {
     if (!refreshTokenEntity) throw new BadRequestException();
     const accessToken = this.generateAccessToken(userId);
     const refreshToken = this.generateRefreshToken(userId);
-    refreshTokenEntity.token = refreshToken;
+    if (refreshTokenEntity) {
+      refreshTokenEntity.token = refreshToken;
+    }
 
     return { accessToken, refreshToken };
   }

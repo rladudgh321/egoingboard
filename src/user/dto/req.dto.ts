@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Post, Profile } from '@prisma/client';
+import { Post } from '@prisma/client';
 import { IsEmail, IsEnum, IsString } from 'class-validator';
 
 export enum GENDER {
@@ -33,6 +33,4 @@ export class SignUpReqDto {
   gender: GENDER;
 
   posts?: Post[];
-
-  profile?: Profile;
 }
