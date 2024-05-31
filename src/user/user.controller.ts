@@ -1,11 +1,12 @@
 import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { ApiPostResponse } from 'src/common/decorator/swagger.decorator';
 import { SignUpReqDto } from './dto/req.dto';
 import { SignUpResDto } from './dto/res.dto';
 import { UserService } from './user.service';
 
 @ApiTags('user')
+@ApiExtraModels(SignUpResDto)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
