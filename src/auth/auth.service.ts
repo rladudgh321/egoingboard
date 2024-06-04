@@ -4,8 +4,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -70,24 +70,21 @@ export class AuthService {
     return this.jwtService.sign(payload, { expiresIn: '30d' });
   }
 
-  async refresh(userId: string) {
+  async refresh(userId: string, token: string) {
     const refreshTokenEntity = await this.prisma.refreshToken.findUnique({
-      where: { refreshTokenId: userId },
+      where: { token },
     });
-    if (!refreshTokenEntity) throw new BadRequestException();
+    if (!refreshTokenEntity) throw new BadRequestException('refreshToken only');
     const accessToken = this.generateAccessToken(userId);
     const refreshToken = this.generateRefreshToken(userId);
     if (refreshTokenEntity) {
       refreshTokenEntity.token = refreshToken;
     }
 
-    return { accessToken, refreshToken };
+    return { id: userId, accessToken, refreshToken };
   }
 
-  private async createRefreshTokenUsingUser(
-    userId: string,
-    refreshToken: string,
-  ) {
+  private async createRefreshtoken(userId: string, refreshToken: string) {
     let refresh = await this.prisma.refreshToken.findUnique({
       where: {
         refreshTokenId: userId,
@@ -113,7 +110,7 @@ export class AuthService {
     }
   }
 
-  private async validateUser(email: string, password: string): Promise<User> {
+  private async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -123,5 +120,16 @@ export class AuthService {
     if (!isMatch) throw new UnauthorizedException();
 
     return user;
+  }
+
+  async signin(email: string, password: string) {
+    const user = await this.validateUser(email, password);
+
+    const accessToken = await this.generateAccessToken(user.id);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    await this.createRefreshtoken(user.id, refreshToken);
+
+    return { id: user.id, accessToken, refreshToken };
   }
 }

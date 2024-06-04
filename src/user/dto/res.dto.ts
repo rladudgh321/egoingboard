@@ -1,12 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsDate, IsEmail, IsUUID } from 'class-validator';
 
-export class SignUpResDto {
+export class FindUserResDto {
   @ApiProperty({ required: true })
+  @IsUUID()
   id: string;
 
   @ApiProperty({ required: true })
-  accessToken: string;
+  @IsEmail()
+  email: string;
 
   @ApiProperty({ required: true })
-  refreshToken: string;
+  @IsDate()
+  createdAt: string;
 }

@@ -1,30 +1,37 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
-import { ApiPostResponse } from 'src/common/decorator/swagger.decorator';
-import { SignUpReqDto } from './dto/req.dto';
-import { SignUpResDto } from './dto/res.dto';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Roles } from 'src/common/decorator/roles.decorator';
+import {
+  ApiGetItemsResponse,
+  ApiGetResponse,
+} from 'src/common/decorator/swagger.decorator';
+import { PageReqDto } from 'src/common/dto/req.dto';
+import { FindUserReqDto } from './dto/req.dto';
+import { FindUserResDto } from './dto/res.dto';
+import { Role } from './enum/role.enum';
 import { UserService } from './user.service';
-
 @ApiTags('user')
-@ApiExtraModels(SignUpResDto)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @ApiPostResponse(SignUpResDto)
+  @ApiGetItemsResponse(FindUserResDto)
   @ApiBearerAuth()
-  @Post('signup')
-  async signup(
-    @Body()
-    { email, password, passwordConfirm, name, gender }: SignUpReqDto,
-  ): Promise<SignUpResDto> {
-    if (password !== passwordConfirm) throw new BadRequestException();
-    const { id, accessToken, refreshToken } = await this.userService.signup(
-      email,
-      password,
-      name,
-      gender,
-    );
-    return { id, accessToken, refreshToken };
+  @Roles(Role.Admin)
+  @Get()
+  async findAll(
+    @Query() { page, size }: PageReqDto,
+  ): Promise<FindUserResDto[]> {
+    const users = await this.userService.findAll(page, size);
+    return users.map(({ id, email, createdAt }) => {
+      return { id, email, createdAt: createdAt.toISOString() };
+    });
+  }
+
+  @ApiGetResponse(FindUserResDto)
+  @ApiBearerAuth()
+  @Get(':id')
+  async findOne(@Param() { id }: FindUserReqDto): Promise<FindUserResDto> {
+    const { email, createdAt } = await this.userService.findOne(id);
+    return { id, email, createdAt: createdAt.toISOString() };
   }
 }
