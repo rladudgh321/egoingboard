@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   Post,
+  Req,
+  Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/common/decorator/public.decorator';
@@ -12,6 +16,9 @@ import { User, UserAfterAuth } from 'src/common/decorator/user.decorator';
 import { AuthService } from './auth.service';
 import { SignUpReqDto, SigninReqDto } from './dto/req.dto';
 import { RefreshTokenResDto, SignUpResDto } from './dto/res.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
 
 @ApiTags('auth')
 @ApiExtraModels(SignUpReqDto, SignUpResDto)
@@ -59,4 +66,31 @@ export class AuthController {
     );
     return { id, accessToken, refreshToken };
   }
+
+  // router.post("/logout", isLoggedIn, (req, res) => {
+  //   req.logout();
+  //   req.session.destroy();
+  //   res.send("ok");
+  // });
+
+  // @ApiBearerAuth()
+  // @Post('logout')
+  // async logout(@Req() request, @Res() res): Promise<any> {
+  //   console.log("request.user", request.user);
+  //   // console.log('request', request);
+  //   request.logout();
+  //   return res.send('ok');
+  // }
+
+  @Public()
+  @Post('logout')
+  async logOut(@Res({ passthrough: true }) res: Response) {
+    // const token = await this.authService.logOut();
+    // localStorage.removeItem('authorized');
+    // const data = localStorage.getItem('authorized');
+    global.localStorage.clear();
+    // console.log('data', data);
+    res.send('ok');
+  }
+  
 }

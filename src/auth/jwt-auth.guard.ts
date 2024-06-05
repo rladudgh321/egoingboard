@@ -40,10 +40,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     const http = context.switchToHttp();
     const { url, headers } = http.getRequest<Request>();
-    const token = /Bearer\s(.+)/.exec(headers['authorization'])[1];
+    const token = /Bearer\s(.+)/.exec(headers['authorization'])?.[1];
     const decoded = this.jwtService.decode(token);
 
-    if (url !== '/api/auth/refresh' && decoded['tokenType'] === 'refresh') {
+    if (url !== '/api/auth/refresh' && decoded?.['tokenType'] === 'refresh') {
       const error = new UnauthorizedException('accessToken is required');
       this.logger.error(error.message, error.stack);
       throw error;

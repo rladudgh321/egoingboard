@@ -132,4 +132,10 @@ export class AuthService {
 
     return { id: user.id, accessToken, refreshToken };
   }
+
+  async logOut() {
+    return {
+      value: ''
+    };
+  }
 }
