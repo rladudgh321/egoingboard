@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import {
   ApiGetItemsResponse,
   ApiGetResponse,
 } from 'src/common/decorator/swagger.decorator';
+import { User, UserAfterAuth } from 'src/common/decorator/user.decorator';
 import { PageReqDto } from 'src/common/dto/req.dto';
 import { FindUserReqDto } from './dto/req.dto';
 import { FindUserResDto } from './dto/res.dto';
@@ -14,14 +15,20 @@ import { UserService } from './user.service';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
   @ApiGetItemsResponse(FindUserResDto)
   @ApiBearerAuth()
   @Roles(Role.Admin)
   @Get()
   async findAll(
     @Query() { page, size }: PageReqDto,
+    @User() user: UserAfterAuth,
+    @Req() req,
   ): Promise<FindUserResDto[]> {
     const users = await this.userService.findAll(page, size);
+    console.log('userId', user);
+    console.log('req', req.user);
+    Logger.log(`Controller - User: ${JSON.stringify(user)}`);
     return users.map(({ id, email, createdAt }) => {
       return { id, email, createdAt: createdAt.toISOString() };
     });

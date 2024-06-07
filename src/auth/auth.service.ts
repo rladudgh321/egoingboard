@@ -129,13 +129,8 @@ export class AuthService {
     const refreshToken = await this.generateRefreshToken(user.id);
 
     await this.createRefreshtoken(user.id, refreshToken);
+    console.log('login');
 
     return { id: user.id, accessToken, refreshToken };
-  }
-
-  async logOut() {
-    return {
-      value: ''
-    };
   }
 }
