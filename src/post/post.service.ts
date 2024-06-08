@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -9,7 +13,6 @@ export class PostService {
     private readonly jwtService: JwtService,
   ) {}
   async addpost(title: string, content: string, token: string) {
-    console.log('token', token);
     const decoded = this.jwtService.decode(token);
     const user = await this.prismaService.user.findUnique({
       where: { id: decoded.sub },
@@ -28,5 +31,21 @@ export class PostService {
     });
 
     return post;
+  }
+
+  async getPosts() {
+    const post = await this.prismaService.post.findMany();
+    return post;
+  }
+
+  async removePost(id: string, data: string) {
+    const post = await this.prismaService.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
+
+    const decoded = this.jwtService.decode(data);
+    if (post.authorId !== decoded.sub)
+      throw new UnauthorizedException('허용되지 않은 방법입니다');
+    const removePost = await this.prismaService.post.delete({ where: { id } });
+    return removePost;
   }
 }
