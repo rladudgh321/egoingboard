@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Headers,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -124,13 +125,10 @@ export class AuthService {
 
   async signin(email: string, password: string) {
     const user = await this.validateUser(email, password);
-
-    const accessToken = await this.generateAccessToken(user.id);
-    const refreshToken = await this.generateRefreshToken(user.id);
+    const accessToken = this.generateAccessToken(user.id);
+    const refreshToken = this.generateRefreshToken(user.id);
 
     await this.createRefreshtoken(user.id, refreshToken);
-    console.log('login');
-
     return { id: user.id, accessToken, refreshToken };
   }
 }

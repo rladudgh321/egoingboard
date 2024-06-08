@@ -7,14 +7,14 @@ import {
   SwaggerModule,
 } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import * as passport from 'passport';
+// import * as passport from 'passport';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({ origin: true, credentials: true });
 
-  app.use(passport.initialize());
+  // app.use(passport.initialize());
 
   const config = new DocumentBuilder()
     .setTitle('egoing API board')

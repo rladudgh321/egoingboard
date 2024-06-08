@@ -6,6 +6,7 @@ import {
   LoggerService,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,6 +24,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     private readonly jwtService: JwtService,
     private readonly userService: UserService,
     @Inject(Logger) private readonly logger: LoggerService,
+    private readonly configService: ConfigService,
   ) {
     super();
   }
@@ -30,36 +32,46 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    try {
+      const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]);
 
-    const http = context.switchToHttp();
-    const request = http.getRequest<Request>();
-    const { url, headers } = request;
-    const token = /Bearer\s(.+)/.exec(headers['authorization'])?.[1];
-    const decoded = this.jwtService.decode(token);
-    request['user'] = decoded;
+      if (isPublic) {
+        return true;
+      }
 
-    if (isPublic) {
-      return true;
-    }
+      const http = context.switchToHttp();
+      const request = http.getRequest<Request>();
+      const { url, headers } = request;
+      const token = /Bearer\s(.+)/.exec(headers['authorization'])?.[1];
+      console.log('headers', headers);
+      if (!token) throw new UnauthorizedException('accessToken is required');
 
-    if (url !== '/api/auth/refresh' && decoded?.['tokenType'] === 'refresh') {
-      const error = new UnauthorizedException('accessToken is required');
-      this.logger.error(error.message, error.stack);
-      throw error;
-    }
+      const key = this.configService.get('jwt');
+      const decoded = this.jwtService.verify(token, key);
+      console.log('decoded', decoded);
+      request['user'] = decoded;
 
-    const isAdmin = this.reflector.getAllAndOverride<Role[]>(IS_ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+      if (url !== '/api/auth/refresh' && decoded?.['tokenType'] === 'refresh') {
+        const error = new UnauthorizedException('accessToken is required');
+        this.logger.error(error.message, error.stack);
+        throw error;
+      }
 
-    if (isAdmin) {
-      const userId = decoded['sub'];
-      return this.userService.checkAdminUser(userId);
+      const isAdmin = this.reflector.getAllAndOverride<Role[]>(IS_ROLES_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]);
+
+      if (isAdmin) {
+        const userId = decoded['sub'];
+        return this.userService.checkAdminUser(userId);
+      }
+    } catch (err) {
+      this.logger.error('Invalid access token: ' + err.message);
+      throw new UnauthorizedException('Invalid access token');
     }
 
     return super.canActivate(context);
