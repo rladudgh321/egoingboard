@@ -47,6 +47,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       const { url, headers } = request;
       const token = /Bearer\s(.+)/.exec(headers['authorization'])?.[1];
       console.log('headers', headers);
+      console.log('token', token);
       if (!token) throw new UnauthorizedException('accessToken is required');
 
       const key = this.configService.get('jwt');
@@ -69,6 +70,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         const userId = decoded['sub'];
         return this.userService.checkAdminUser(userId);
       }
+
+      // return super.canActivate(context);
     } catch (err) {
       this.logger.error('Invalid access token: ' + err.message);
       throw new UnauthorizedException('Invalid access token');

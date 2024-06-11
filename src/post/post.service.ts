@@ -34,18 +34,63 @@ export class PostService {
   }
 
   async getPosts() {
-    const post = await this.prismaService.post.findMany();
+    const posts = await this.prismaService.post.findMany();
+    return posts;
+  }
+
+  async getPost(id: string, token: string) {
+    const post = await this.prismaService.post.findUnique({
+      where: { id },
+    });
+
+    const decoded = this.jwtService.decode(token);
+    if (post.authorId !== decoded?.sub)
+      throw new UnauthorizedException('허용되지 않은 방법입니다');
+
+    if (!post) throw new NotFoundException('게시글을 찾을 수 없습니다');
+
     return post;
   }
 
   async removePost(id: string, data: string) {
     const post = await this.prismaService.post.findUnique({ where: { id } });
-    if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
 
     const decoded = this.jwtService.decode(data);
     if (post.authorId !== decoded.sub)
       throw new UnauthorizedException('허용되지 않은 방법입니다');
+
+    if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
+
     const removePost = await this.prismaService.post.delete({ where: { id } });
     return removePost;
+  }
+
+  async removePostByAdmin(id: string) {
+    const post = await this.prismaService.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
+
+    const removePost = await this.prismaService.post.delete({ where: { id } });
+    return removePost;
+  }
+
+  async updatePost(id: string, title: string, content: string, token: string) {
+    const post = await this.prismaService.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
+
+    const decoded = this.jwtService.decode(token);
+    if (post.authorId !== decoded?.sub)
+      throw new UnauthorizedException('허용되지 않은 방법입니다');
+
+    const updatePost = await this.prismaService.post.update({
+      where: {
+        id,
+      },
+      data: {
+        title,
+        content,
+      },
+    });
+
+    return updatePost;
   }
 }
