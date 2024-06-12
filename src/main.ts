@@ -12,7 +12,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({ origin: true, credentials: true });
+  app.enableCors({
+    origin: 'https://egoing-front-3ketjwcx9-rladudgh321s-projects.vercel.app',
+    credentials: true,
+  });
 
   // app.use(passport.initialize());
 
