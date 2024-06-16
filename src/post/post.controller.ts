@@ -7,19 +7,19 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/common/decorator/public.decorator';
+import { Roles } from 'src/common/decorator/roles.decorator';
+import { ApiPostResponse } from 'src/common/decorator/swagger.decorator';
+import { Role } from 'src/user/enum/role.enum';
 import {
   UpdatePostReqDto,
   addpostReqDto,
   getPostReqDto,
   removePostReqDto,
 } from './dto/req.dto';
-import { PostService } from './post.service';
 import { GetPostReqDto, UpdatePostResDto, addpostResDto } from './dto/res.dto';
-import { ApiBearerAuth, ApiExtraModels, ApiTags } from '@nestjs/swagger';
-import { ApiPostResponse } from 'src/common/decorator/swagger.decorator';
-import { Public } from 'src/common/decorator/public.decorator';
-import { Role } from 'src/user/enum/role.enum';
-import { Roles } from 'src/common/decorator/roles.decorator';
+import { PostService } from './post.service';
 
 @ApiTags('post')
 @ApiExtraModels(addpostResDto, UpdatePostResDto)
@@ -86,6 +86,19 @@ export class PostController {
   @ApiBearerAuth()
   @Patch(':id')
   async updatePost(
+    @Param() { id }: UpdatePostReqDto,
+    @Body()
+    { title, content, token }: UpdatePostReqDto,
+  ): Promise<UpdatePostResDto> {
+    const post = await this.postService.updatePost(id, title, content, token);
+    return { id, title: post.title, content: post.content };
+  }
+
+  @ApiPostResponse(UpdatePostResDto)
+  @ApiBearerAuth()
+  @Roles(Role.Admin)
+  @Patch(':id/admin')
+  async updatePostByAdmin(
     @Param() { id }: UpdatePostReqDto,
     @Body()
     { title, content, token }: UpdatePostReqDto,
