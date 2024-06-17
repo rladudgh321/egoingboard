@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
 
 export class addpostResDto {
   @ApiProperty({ required: true, example: '유저아이디' })
@@ -12,6 +13,18 @@ export class addpostResDto {
 
   @ApiProperty({ required: true, example: 'postId' })
   postId: string;
+}
+
+export class RemovePostResDto {
+  @ApiProperty({ required: true, title: 'deleted UUID' })
+  @IsUUID()
+  id: string;
+
+  @ApiProperty({ required: true, title: 'deleted Title' })
+  title: string;
+
+  @ApiProperty({ required: true, title: 'deleted content' })
+  content: string;
 }
 
 export class UpdatePostResDto {
