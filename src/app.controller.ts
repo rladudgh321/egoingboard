@@ -8,6 +8,6 @@ export class AppController {
   @Public()
   @Get()
   getHello(): string {
-    return process.env.DATABASE_URL;
+    return 'hello backend';
   }
 }
