@@ -6,12 +6,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Role } from 'src/user/enum/role.enum';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
   async addpost(title: string, content: string, token: string) {
     const decoded = this.jwtService.decode(token);
@@ -55,15 +57,25 @@ export class PostService {
 
   async removePost(id: string, data: string) {
     const post = await this.prismaService.post.findUnique({ where: { id } });
-
-    const decoded = this.jwtService.decode(data);
-    if (post.authorId !== decoded.sub)
-      throw new UnauthorizedException('허용되지 않은 방법입니다');
-
     if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
 
+    const userId = this.jwtService.decode(data).sub;
+
+    const user = await this.userService.findOne(userId);
+
+    if (user.role === Role.Admin) {
+      return this.removePostByAdmin(id);
+    }
+
+    if (post.authorId !== userId)
+      throw new UnauthorizedException('허용되지 않은 방법입니다');
+
     const removePost = await this.prismaService.post.delete({ where: { id } });
-    return removePost;
+    return {
+      id: removePost.id,
+      title: removePost.title,
+      content: removePost.content,
+    };
   }
 
   async removePostByAdmin(id: string) {
@@ -78,8 +90,15 @@ export class PostService {
     const post = await this.prismaService.post.findUnique({ where: { id } });
     if (!post) throw new NotFoundException('게시글이 존재하지 않습니다');
 
-    const decoded = this.jwtService.decode(token);
-    if (post.authorId !== decoded?.sub)
+    const userId = this.jwtService.decode(token).sub;
+
+    const user = await this.userService.findOne(userId);
+
+    if (user.role === Role.Admin) {
+      return this.updatePostByAdmin(id, title, content, token);
+    }
+
+    if (post.authorId !== userId)
       throw new UnauthorizedException('허용되지 않은 방법입니다');
 
     const updatePost = await this.prismaService.post.update({
@@ -89,6 +108,9 @@ export class PostService {
       data: {
         title,
         content,
+      },
+      include: {
+        author: true,
       },
     });
 

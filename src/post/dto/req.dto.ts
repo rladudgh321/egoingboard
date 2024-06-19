@@ -18,8 +18,10 @@ export class addpostReqDto {
 
 export class removePostReqDto {
   @ApiProperty({ required: true, title: 'postId' })
-  @IsUUID()
   id: string;
+
+  @ApiProperty({ required: true, title: 'acessToken' })
+  data: string;
 }
 
 export class UpdatePostReqDto {

@@ -18,7 +18,7 @@ import {
   getPostReqDto,
   removePostReqDto,
 } from './dto/req.dto';
-import { GetPostReqDto, UpdatePostResDto, addpostResDto } from './dto/res.dto';
+import { GetPostReqDto, RemovePostResDto, UpdatePostResDto, addpostResDto } from './dto/res.dto';
 import { PostService } from './post.service';
 
 @ApiTags('post')
@@ -66,11 +66,11 @@ export class PostController {
   @Delete(':id')
   async removePost(
     @Param() { id }: removePostReqDto,
-    @Body() { data }: { data: string },
-  ) {
+    @Body() { data }: removePostReqDto,
+  ): Promise<RemovePostResDto> {
     console.log('delete', id);
     const post = await this.postService.removePost(id, data);
-    return post;
+    return { id: post.id, title: post.title, content: post.content };
   }
 
   @ApiBearerAuth()
